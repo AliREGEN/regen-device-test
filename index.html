@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://zsocxosthmprsqmzllgd.supabase.co; media-src blob: mediastream:; img-src data:">
+<meta name="referrer" content="no-referrer">
+<title>REGEN Phone Check</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  /* REGEN ops look: Outfit, ink buttons, brand teal. */
+  :root { --teal: #2F6F62; --teal-soft: #E6F1EE; --on-teal-2: #D5E6E2; --ink: #1D2023; --muted: #4A5056; --line: #E9EBEA;
+    --bad: #B91C1C; --bad-line: #FCA5A5; --bg: #F1F2F1; --green: #4B9829; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 17px/1.45 Outfit, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+  body { display: flex; flex-direction: column; min-height: 100dvh; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  header { display: flex; align-items: center; gap: 8px; padding: 14px 20px; background: #FFFFFF; border-bottom: 1px solid var(--line); }
+  header b { font-size: 18px; font-weight: 600; }
+  header span { margin-left: auto; font-size: 14px; color: var(--muted); }
+  main { flex: 1; display: flex; flex-direction: column; padding: 22px 20px; gap: 16px; max-width: 520px; width: 100%; margin: 0 auto; }
+  h1 { margin: 0; font-size: 26px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; }
+  p { margin: 0; color: var(--muted); }
+  .grow { flex: 1; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 999px; padding: 15px 18px; width: 100%; background: var(--ink); color: #fff; }
+  button.secondary { background: #fff; color: var(--ink); border: 1px solid #DCDFDE; }
+  button.bad { background: #fff; color: var(--bad); border: 1px solid var(--bad-line); }
+  button:disabled { opacity: .45; }
+  .row { display: flex; gap: 10px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .welcome { border-radius: 24px; padding: 26px 22px; background: var(--teal); color: #fff; display: flex; flex-direction: column; gap: 12px; }
+  .welcome h1 { font-size: 34px; }
+  .welcome p { color: var(--on-teal-2); }
+  .steps { display: flex; gap: 6px; }
+  .steps i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+  .steps i.done { background: var(--teal); }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .keypad button { background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 14px; font-size: 24px; padding: 14px 0; }
+  .digits { font-size: 40px; letter-spacing: 14px; text-align: center; font-weight: 700; min-height: 56px; }
+  .meter { height: 18px; border-radius: 9px; background: var(--line); overflow: hidden; }
+  .meter div { height: 100%; width: 0; background: var(--teal); transition: width .08s; }
+  video { width: 100%; border-radius: 16px; background: #000; aspect-ratio: 3/4; object-fit: cover; }
+  .overlay { position: fixed; inset: 0; z-index: 10; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .grid { display: grid; width: 100%; height: 100%; }
+  .grid div { border: 1px solid rgba(0,0,0,.06); background: #fff; }
+  .grid div.hit { background: var(--teal); }
+  .hint { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(21,23,24,.86); color: #fff; padding: 14px 20px; border-radius: 16px; font-size: 15px; pointer-events: none; text-align: center; }
+  .cant { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: auto; padding: 10px 16px; font-size: 14px; background: rgba(255,255,255,.94); color: var(--bad); border: 1px solid var(--bad-line); }
+  .ok { color: var(--teal); font-weight: 700; }
+  .done-mark { width: 96px; height: 96px; border-radius: 50%; background: var(--teal-soft); color: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; margin: 0 auto; }
+  .big { font-size: 64px; text-align: center; }
+</style>
+</head>
+<body>
+<header><svg height="22" width="99" viewBox="370 350 4110 915" role="img" aria-label="REGEN"><path fill="#1D2023" d="M418.352 1240C410.426 1240 404 1233.57 404 1225.65V391.352C404 383.426 410.426 377 418.352 377H727.759C794.085 377 849.731 388.518 894.697 411.554C939.945 434.59 974.091 466.896 997.136 508.473C1020.46 549.769 1032.13 597.947 1032.13 653.008C1032.13 708.35 1020.32 756.389 996.715 797.123C973.389 837.576 938.961 868.899 893.432 891.092C847.904 913.004 791.977 923.96 725.651 923.96H509.409C501.483 923.96 495.057 917.534 495.057 909.608V808.525C495.057 800.599 501.483 794.173 509.409 794.173H704.573C743.357 794.173 775.114 788.835 799.846 778.16C824.577 767.204 842.845 751.332 854.649 730.543C866.734 709.474 872.776 683.629 872.776 653.008C872.776 622.388 866.734 596.262 854.649 574.63C842.564 552.718 824.156 536.144 799.424 524.907C774.693 513.389 742.795 507.63 703.73 507.63H574.751C566.825 507.63 560.399 514.056 560.399 521.982V1225.65C560.399 1233.57 553.973 1240 546.047 1240H418.352ZM841.5 848.953C846.748 848.953 851.577 851.817 854.094 856.422L1052.14 1218.76C1057.36 1228.33 1050.44 1240 1039.54 1240H897.801C892.515 1240 887.657 1237.09 885.156 1232.44L690.629 870.094C685.496 860.533 692.422 848.953 703.274 848.953H841.5Z"/><path fill="#1D2023" d="M1190.44 1240C1182.51 1240 1176.09 1233.57 1176.09 1225.65V391.352C1176.09 383.426 1182.51 377 1190.44 377H1723.26C1731.18 377 1737.61 383.426 1737.61 391.352V493.699C1737.61 501.626 1731.18 508.051 1723.26 508.051H1346.84C1338.91 508.051 1332.49 514.477 1332.49 522.404V727.99C1332.49 735.917 1338.91 742.342 1346.84 742.342H1694.17C1702.1 742.342 1708.52 748.768 1708.52 756.695V859.041C1708.52 866.968 1702.1 873.394 1694.17 873.394H1346.84C1338.91 873.394 1332.49 879.819 1332.49 887.746V1094.6C1332.49 1102.52 1338.91 1108.95 1346.84 1108.95H1726.63C1734.56 1108.95 1740.98 1115.37 1740.98 1123.3V1225.65C1740.98 1233.57 1734.56 1240 1726.63 1240H1190.44Z"/><path fill="#1D2023" d="M3053.24 1240C3045.32 1240 3038.89 1233.57 3038.89 1225.65V391.352C3038.89 383.426 3045.32 377 3053.24 377H3586.06C3593.98 377 3600.41 383.426 3600.41 391.352V493.699C3600.41 501.626 3593.98 508.051 3586.06 508.051H3209.64C3201.72 508.051 3195.29 514.477 3195.29 522.404V727.99C3195.29 735.917 3201.72 742.342 3209.64 742.342H3556.97C3564.9 742.342 3571.32 748.768 3571.32 756.695V859.041C3571.32 866.968 3564.9 873.394 3556.97 873.394H3209.64C3201.72 873.394 3195.29 879.819 3195.29 887.746V1094.6C3195.29 1102.52 3201.72 1108.95 3209.64 1108.95H3589.43C3597.36 1108.95 3603.78 1115.37 3603.78 1123.3V1225.65C3603.78 1233.57 3597.36 1240 3589.43 1240H3053.24Z"/><path fill="#1D2023" d="M4455.11 377C4463.03 377 4469.46 383.426 4469.46 391.352V1225.65C4469.46 1233.57 4463.03 1240 4455.11 1240H4337.86C4333.15 1240 4328.74 1237.69 4326.06 1233.82L3924.94 654.192C3924.06 652.923 3922.61 652.166 3921.07 652.166C3918.47 652.166 3916.37 654.271 3916.37 656.868V1225.65C3916.37 1233.57 3909.94 1240 3902.02 1240H3774.32C3766.4 1240 3759.97 1233.57 3759.97 1225.65V391.352C3759.97 383.426 3766.4 377 3774.32 377H3892.4C3897.11 377 3901.53 379.316 3904.21 383.195L4304.83 963.108C4305.76 964.453 4307.29 965.256 4308.92 965.256C4311.67 965.256 4313.9 963.027 4313.9 960.279V391.352C4313.9 383.426 4320.33 377 4328.25 377H4455.11Z"/><path fill="#4B9829" d="M2670.02 492.23C2680.52 502.518 2694 512.636 2700.32 526.014C2705.45 536.913 2707.9 549.578 2706.13 561.564C2702.67 590.289 2677.16 615.245 2648.25 617.656C2628.17 620.169 2608.2 613.208 2594.24 598.574C2540.13 542.448 2464.55 508.222 2386.66 504.623C2276.43 498.749 2163.49 555.995 2104.83 649.845C2100.27 657.518 2095.28 664.275 2097.01 673.714C2099.02 682.407 2105.67 685.938 2113.11 689.435C2144.36 703.458 2176.23 716.361 2207.31 730.689C2223.27 737.276 2222.66 762.64 2205.95 767.835C2120.38 799.922 2034.07 830.786 1948.4 862.669C1940.96 865.182 1933.22 867.253 1926.36 862.092C1918.75 857.406 1916.98 848.442 1913.79 840.735C1884.61 761.316 1854.92 681.592 1826.39 602.003C1819.53 585.841 1836.99 568.592 1852.95 575.519C1877.37 585.807 1901.36 597.352 1925.61 608.047C1938.31 613.412 1951.66 621.595 1965.39 623.36C1975.34 620.814 1981.18 614.363 1985.77 605.568C2021.2 540.818 2073.3 485.914 2135.5 446.256C2185.43 415.425 2240.9 393.084 2298.92 383.542C2430.92 359.944 2571.72 401.097 2670.02 492.23Z"/><path fill="#4B9829" d="M2814.33 755.443C2818.61 761.894 2820.92 769.839 2823.8 777.004C2852.85 855.404 2881.68 933.94 2910.08 1012.58C2916.6 1026.87 2904.27 1042.15 2889.23 1041.2C2878.25 1038.28 2867.89 1032.51 2857.57 1027.92C2826.38 1013.83 2795.3 999.335 2763.85 985.991C2738.03 1039.13 2701.82 1088.5 2656.95 1127.1C2594.01 1182.96 2514.01 1219.73 2430.86 1232.29C2300.18 1253.92 2159.21 1210.63 2063.8 1118.55C2050.86 1105.65 2037.3 1093.18 2033.8 1074.31C2028.17 1051.08 2037.37 1026.6 2055.61 1011.59C2075.31 994.039 2107.72 991.492 2130.38 1004.43C2142.37 1011.08 2148.72 1021.51 2158.47 1030.68C2203.65 1071.83 2261.09 1098.35 2321.48 1107.28C2438.4 1124.8 2561.81 1070.3 2627.6 972.138C2633.07 963.548 2641.77 952.479 2640.71 941.851C2639.73 932.955 2631.81 928.303 2624.51 924.772C2593.12 910.817 2561.26 897.677 2530.15 883.144C2519.35 878.595 2514.83 864.979 2520.57 854.827C2523.97 847.221 2534.09 844.878 2541.19 841.856C2624.27 811.705 2707.39 781.01 2790.38 750.52C2798.16 747.6 2808.82 748.618 2814.33 755.443Z"/></svg><span id="model"></span></header>
+<main id="app"><p>Loading…</p></main>
+<script>
+'use strict';
+// Runs on the seller's phone after scanning the QR code in REGEN 360. Results go to the Mac through
+// Supabase (device_test_* functions, which only accept this session's token). Nothing is stored here.
+const SUPABASE = 'https://zsocxosthmprsqmzllgd.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzb2N4b3N0aG1wcnNxbXpsbGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5NjY5NzMsImV4cCI6MjA2OTU0Mjk3M30.xuheJiX-w50ghYUXXxnvzj9k-shij9SmZgc8fshA59M';
+
+const token = new URLSearchParams(location.hash.slice(1)).get('t') || '';
+history.replaceState(null, '', location.pathname);   // keep the token out of the address bar and history
+const app = document.getElementById('app');
+const results = { version: 1, tests: {}, userAgent: navigator.userAgent };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function rpc(name, args) {
+  const res = await fetch(`${SUPABASE}/rest/v1/rpc/${name}`, {
+    method: 'POST', headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  return res.json();
+}
+// Each step also carries the results so far, one letter per test in this order (p pass, f fail, s skipped,
+// - not done yet), so the desk ticks every test as soon as it's done: "speaker|pp------".
+const ORDER = ['touch', 'display', 'speaker', 'microphone', 'rearCamera', 'frontCamera', 'flash', 'vibration'];
+const soFar = () => ORDER.map((t) => ({ pass: 'p', fail: 'f', skipped: 's' })[(results.tests[t] || {}).status] || '-').join('');
+const progress = (step) => rpc('device_test_progress', { p_token: token, p_step: `${step}|${soFar()}` }).catch(() => {});
+
+// ---- Screens ----
+
+let stepIndex = 0, stepCount = 0;
+function screen(html) {
+  const bars = stepCount ? `<div class="steps">${Array.from({ length: stepCount }, (_, i) => `<i class="${i < stepIndex ? 'done' : ''}"></i>`).join('')}</div>` : '';
+  app.innerHTML = bars + html;
+}
+const choose = (buttons) => new Promise((resolve) => {
+  app.querySelectorAll('[data-pick]').forEach((b) => { b.onclick = () => resolve(b.dataset.pick); });
+  void buttons;
+});
+const record = (name, status, note) => { results.tests[name] = note ? { status, note } : { status }; };
+
+function fail(message) {
+  stepCount = 0;
+  screen(`<div class="grow"></div><div class="big">⚠️</div><h1>${esc(message)}</h1>
+    <p>Ask for a new QR code and scan it again.</p><div class="grow"></div>`);
+}
+
+// ---- Tests ----
+
+async function touchTest() {
+  progress('touch');
+  screen(`<h1>Touch screen</h1><p>Slide your finger until every square turns green, edges too.</p>
+    <div class="grow"></div><button data-pick="go">Start</button>`);
+  await choose();
+  const cols = 8, rows = Math.max(12, Math.round(cols * innerHeight / innerWidth));
+  const total = cols * rows;
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `<div class="grid" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr)">${'<div></div>'.repeat(total)}</div>
+    <div class="hint">Fill every square</div><button class="cant">Some squares won't turn green</button>`;
+  document.body.appendChild(overlay);
+  const cells = [...overlay.querySelectorAll('.grid div')];
+  let hits = 0;
+  const outcome = await new Promise((resolve) => {
+    const mark = (x, y) => {
+      const c = cols * Math.min(rows - 1, Math.floor(y / innerHeight * rows)) + Math.min(cols - 1, Math.floor(x / innerWidth * cols));
+      if (cells[c] && !cells[c].classList.contains('hit')) {
+        cells[c].classList.add('hit'); hits++;
+        overlay.querySelector('.hint').style.display = 'none';
+        if (hits === total) resolve('pass');
+      }
+    };
+    overlay.addEventListener('touchstart', (e) => { for (const t of e.touches) mark(t.clientX, t.clientY); }, { passive: true });
+    overlay.addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of e.touches) mark(t.clientX, t.clientY); }, { passive: false });
+    overlay.addEventListener('mousemove', (e) => { if (e.buttons) mark(e.clientX, e.clientY); });
+    overlay.querySelector('.cant').addEventListener('click', (e) => { e.stopPropagation(); resolve('fail'); });
+  });
+  overlay.remove();
+  const covered = Math.round(hits / total * 100);
+  record('touch', outcome, outcome === 'fail' ? `${covered}% of the screen responded` : null);
+}
+
+async function displayTest() {
+  progress('display');
+  screen(`<h1>Screen colours</h1><p>Look for dots, lines or dark patches. Tap for the next colour.</p>
+    <div class="grow"></div><button data-pick="go">Start</button>`);
+  await choose();
+  for (const colour of ['#ff0000', '#00ff00', '#0000ff', '#ffffff']) {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    overlay.style.background = colour;
+    document.body.appendChild(overlay);
+    await new Promise((r) => overlay.addEventListener('click', r, { once: true }));
+    overlay.remove();
+  }
+  screen(`<h1>Did you see any dots, lines or patches?</h1><p>On any of the four colours.</p><div class="grow"></div>
+    <button data-pick="pass">No, every colour looked even</button><button class="bad" data-pick="fail">Yes, I saw marks</button>
+    <button class="secondary" data-pick="again">Show the colours again</button>`);
+  const pick = await choose();
+  if (pick === 'again') return displayTest();
+  record('display', pick, pick === 'fail' ? 'Spots, lines or patches seen on the colour screens' : null);
+}
+
+async function speakerTest() {
+  progress('speaker');
+  if (!('speechSynthesis' in window)) return record('speaker', 'skipped', 'This browser cannot play speech');
+  let attempts = 0;
+  for (;;) {
+    const digits = String(Math.floor(100 + Math.random() * 900));
+    let typed = '';
+    screen(`<h1>Loudspeaker</h1><p>Volume up, silent off. Tap Play and type the 3 numbers you hear.</p>
+      <button class="secondary" data-act="play">▶ Play</button><div class="digits" id="digits"></div>
+      <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, '✓'].map((k) => `<button data-key="${k}">${k}</button>`).join('')}</div>
+      <button class="bad" data-act="silent">I can't hear anything</button>`);
+    const say = () => {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(digits.split('').join(', '));
+      u.rate = 0.75; u.volume = 1; u.lang = 'en-US';
+      speechSynthesis.speak(u);
+    };
+    const show = () => { document.getElementById('digits').textContent = typed.padEnd(3, '·'); };
+    show();
+    const outcome = await new Promise((resolve) => {
+      app.querySelector('[data-act="play"]').onclick = say;
+      app.querySelector('[data-act="silent"]').onclick = () => resolve('silent');
+      app.querySelectorAll('[data-key]').forEach((b) => {
+        b.onclick = () => {
+          const k = b.dataset.key;
+          if (k === '⌫') typed = typed.slice(0, -1);
+          else if (k === '✓') { if (typed.length === 3) resolve(typed === digits ? 'right' : 'wrong'); }
+          else if (typed.length < 3) typed += k;
+          show();
+        };
+      });
+    });
+    speechSynthesis.cancel();
+    if (outcome === 'right') return record('speaker', 'pass');
+    if (outcome === 'silent') return record('speaker', 'fail', 'Nothing was heard from the loudspeaker');
+    if (++attempts >= 2) return record('speaker', 'fail', 'Wrong numbers typed twice - sound unclear or distorted');
+    screen(`<h1>Not quite</h1><p>Let's try once more with new numbers.</p><div class="grow"></div><button data-pick="go">Try again</button>`);
+    await choose();
+  }
+}
+
+async function microphoneTest() {
+  progress('microphone');
+  screen(`<h1>Microphone</h1><p>Tap Start, allow the microphone, then say <b>"Hello REGEN"</b> in a normal voice.</p>
+    <div class="grow"></div><button data-pick="go">Start</button>`);
+  await choose();
+  let stream;
+  // Automatic gain on, like a phone call, so normal speech is picked up at a normal distance.
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } }); }
+  catch { return record('microphone', 'skipped', 'Microphone permission was not given'); }
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  const data = new Float32Array(analyser.fftSize);
+  screen(`<h1>Say "Hello REGEN"</h1><p>The bar moves when the microphone hears you.</p>
+    <div class="meter"><div id="level"></div></div><p id="mic-state">Listening…</p><div class="grow"></div>
+    <button class="bad" data-pick="fail">The bar doesn't move</button>`);
+  const level = document.getElementById('level');
+  const voiced = [];   // times (ms) of frames with voice in them
+  let done = false;
+  const userGaveUp = choose().then(() => 'fail');
+  const heard = new Promise((resolve) => {
+    const tick = () => {
+      if (done) return;
+      analyser.getFloatTimeDomainData(data);
+      // Loudness in decibels: the bar spans -60 dB (silence) to -15 dB (raised voice); speech at
+      // a normal distance sits around -40 to -25 dB, so it fills most of the bar.
+      const rms = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
+      const db = 20 * Math.log10(Math.max(rms, 1e-6));
+      level.style.width = `${Math.max(0, Math.min(100, (db + 60) / 45 * 100))}%`;
+      // Heard once about a quarter of a second of voice falls within two seconds: speech has gaps between
+      // syllables, so the voice doesn't have to be continuous.
+      const now = performance.now();
+      if (db > -42) voiced.push(now);
+      while (voiced.length && voiced[0] < now - 2000) voiced.shift();
+      if (voiced.length >= 15) resolve('pass'); else requestAnimationFrame(tick);
+    };
+    tick();
+  });
+  const outcome = await Promise.race([heard, userGaveUp]);
+  done = true;
+  stream.getTracks().forEach((t) => t.stop());
+  ctx.close();
+  record('microphone', outcome, outcome === 'fail' ? 'No sound picked up by the microphone' : null);
+  if (outcome === 'pass') { screen(`<div class="grow"></div><div class="big ok">✓</div><h1>Heard you</h1><div class="grow"></div>`); await wait(700); }
+}
+
+// Every camera lens the browser can open, back and front (iPhone Safari lists each lens: "Back Ultra Wide
+// Camera", "Back Camera", "Back Telephoto Camera", "Front Camera"). Combined virtual cameras ("Back Dual
+// Camera", "Back Triple Camera") are skipped: they are the same lenses. Zoom buttons appear where the
+// camera supports zoom control (most Android phones in Chrome).
+function lensName(device, i, count) {
+  const label = device.label || '';
+  const back = /back|rear|environment/i.test(label) || !/front|user|face/i.test(label);
+  const side = back ? 'Back' : 'Front';
+  if (/ultra ?wide/i.test(label)) return { back, name: `${side} ultra-wide (0.5×)` };
+  if (/tele/i.test(label)) return { back, name: `${side} telephoto (zoom)` };
+  if (/^(back|front) camera$/i.test(label.trim())) return { back, name: `${side} camera (1×)` };
+  return { back, name: count > 1 ? `${side} camera ${i + 1}` : `${side} camera` };
+}
+
+async function listLenses() {
+  // Labels are only shown after camera permission is given, so open the main camera once first.
+  let probe;
+  try { probe = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); }
+  catch { return null; }
+  const devices = (await navigator.mediaDevices.enumerateDevices())
+    .filter((d) => d.kind === 'videoinput' && !/dual|triple|desk ?view/i.test(d.label));
+  probe.getTracks().forEach((t) => t.stop());
+  const named = devices.map((d) => ({ id: d.deviceId, ...lensName(d, 0, 1) }));
+  for (const group of [named.filter((l) => l.back), named.filter((l) => !l.back)]) {
+    group.forEach((l, i) => { if (/camera$/.test(l.name)) l.name = lensName(devices.find((d) => d.deviceId === l.id), i, group.length).name; });
+  }
+  // Back lenses first (main camera before the others), then the front.
+  const rank = (l) => (l.back ? 0 : 10) + (/1×|camera( 1)?$/.test(l.name) ? 0 : /ultra/.test(l.name) ? 1 : 2);
+  return named.sort((a, b) => rank(a) - rank(b));
+}
+
+async function lensTest(lens, flashDone) {
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: lens.id } }, audio: false }); }
+  catch { return { lens: lens.name, status: 'skipped', note: "Couldn't open this camera" }; }
+  const track = stream.getVideoTracks()[0];
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  const zooms = caps.zoom ? [caps.zoom.min < 1 ? caps.zoom.min : null, 1, 2, 3, 5, 10]
+    .filter((z) => z != null && z >= caps.zoom.min && z <= caps.zoom.max) : [];
+  screen(`<h1>${esc(lens.name)}</h1><p>Point it at something nearby.${zooms.length > 1 ? ' Try each zoom.' : ''} Is the picture clear?</p>
+    <video autoplay playsinline muted></video>
+    ${zooms.length > 1 ? `<div class="row">${zooms.map((z) => `<button class="secondary" data-zoom="${z}">${+z.toFixed(1)}×</button>`).join('')}</div>` : ''}
+    <div class="row"><button class="bad" data-pick="fail">No - black, blurry or broken</button><button data-pick="pass">Yes, it's clear</button></div>`);
+  app.querySelector('video').srcObject = stream;
+  app.querySelectorAll('[data-zoom]').forEach((b) => {
+    b.onclick = () => track.applyConstraints({ advanced: [{ zoom: +b.dataset.zoom }] }).catch(() => {});
+  });
+  const pick = await choose();
+  if (lens.back && !flashDone()) await flashTest(track);
+  stream.getTracks().forEach((t) => t.stop());
+  return { lens: lens.name, status: pick, note: pick === 'fail' ? `${lens.name}: picture black, blurry or broken` : null };
+}
+
+async function camerasTest() {
+  progress('rearCamera');
+  screen(`<h1>Cameras</h1><p>Tap Start, allow the camera and check each picture.</p>
+    <div class="grow"></div><button data-pick="go">Start</button>`);
+  await choose();
+  const lenses = await listLenses();
+  if (!lenses) {
+    record('rearCamera', 'skipped', 'Camera permission was not given');
+    return record('frontCamera', 'skipped', 'Camera permission was not given');
+  }
+  const outcome = { rearCamera: [], frontCamera: [] };
+  let flashTried = false;
+  for (const lens of lenses) {
+    progress(lens.back ? 'rearCamera' : 'frontCamera');
+    const r = await lensTest(lens, () => { const done = flashTried; flashTried = true; return done; });
+    outcome[lens.back ? 'rearCamera' : 'frontCamera'].push(r);
+  }
+  // One result per side for the Mac: failed if any lens failed; the lens list is kept for the record.
+  for (const [name, list] of Object.entries(outcome)) {
+    if (!list.length) { record(name, 'skipped', `No ${name === 'rearCamera' ? 'back' : 'front'} camera could be opened`); continue; }
+    const failed = list.filter((l) => l.status === 'fail');
+    const tested = list.filter((l) => l.status !== 'skipped');
+    const status = failed.length ? 'fail' : tested.length ? 'pass' : 'skipped';
+    results.tests[name] = { status, note: failed.length ? failed.map((l) => l.note).join('; ') : `${tested.length} of ${list.length} cameras clear: ${list.map((l) => l.lens).join(', ')}`, lenses: list };
+  }
+}
+
+async function flashTest(track) {
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  if (!caps.torch) return;   // Safari and many browsers can't control the flash; asked on the Mac instead
+  progress('flash');
+  try { await track.applyConstraints({ advanced: [{ torch: true }] }); }
+  catch { return; }
+  screen(`<h1>Is the flash on?</h1><p>The light on the back of the phone should be shining.</p><div class="grow"></div>
+    <div class="row"><button class="bad" data-pick="fail">No</button><button data-pick="pass">Yes, it's on</button></div>`);
+  const pick = await choose();
+  try { await track.applyConstraints({ advanced: [{ torch: false }] }); } catch {}
+  record('flash', pick, pick === 'fail' ? 'Flash did not light up' : null);
+}
+
+async function vibrationTest() {
+  if (!('vibrate' in navigator)) return;   // iPhones: asked on the Mac instead
+  progress('vibration');
+  screen(`<h1>Vibration</h1><p>Hold the phone and tap Vibrate.</p><button class="secondary" data-act="buzz">Vibrate</button><div class="grow"></div>
+    <div class="row"><button class="bad" data-pick="fail">It didn't vibrate</button><button data-pick="pass">It vibrated</button></div>`);
+  app.querySelector('[data-act="buzz"]').onclick = () => navigator.vibrate([400, 150, 400]);
+  const pick = await choose();
+  record('vibration', pick, pick === 'fail' ? 'No vibration felt' : null);
+}
+
+// ---- Flow ----
+
+async function start() {
+  if (!/^[0-9a-f]{48}$/.test(token)) return fail('This link is incomplete.');
+  let session;
+  try { session = await rpc('device_test_open', { p_token: token }); }
+  catch { return fail("Can't reach REGEN. Check the phone's internet connection."); }
+  if (!session) return fail('This test link has expired or was already used.');
+  document.getElementById('model').textContent = session.model;
+
+  screen(`<div class="welcome"><h1>Let's check this ${esc(session.model)}</h1>
+    <p>A few quick tests. About two minutes.</p></div><div class="grow"></div><button data-pick="go">Start the tests</button>`);
+  await choose();
+
+  const tests = [touchTest, displayTest, speakerTest, microphoneTest,
+    camerasTest, vibrationTest];
+  stepCount = tests.length;
+  for (const [i, test] of tests.entries()) { stepIndex = i; await test(); }
+  stepIndex = stepCount;
+
+  results.completedAt = new Date().toISOString();
+  screen(`<div class="grow"></div><p>Sending results…</p><div class="grow"></div>`);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const ok = await rpc('device_test_submit', { p_token: token, p_results: results });
+      if (!ok) return fail('This test link has expired or was already used.');
+      break;
+    } catch {
+      if (attempt >= 4) return fail("Couldn't send the results. Check the internet connection.");
+      await wait(1500 * (attempt + 1));
+    }
+  }
+  stepCount = 0;
+  screen(`<div class="grow"></div><div class="done-mark">✓</div><h1 style="text-align:center">All done</h1>
+    <p style="text-align:center">Done. Hand the phone back.</p><div class="grow"></div>`);
+}
+
+start();
+</script>
+</body>
+</html>
